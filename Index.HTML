@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการอุปกรณ์และทรัพย์สิน</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- SheetJS (Excel Export) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.css"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- jsPDF & AutoTable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .preview-img { max-width: 150px; max-height: 150px; object-fit: cover; border-radius: 8px; display: none; margin-top: 10px; }
+        .table-img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Navbar -->
+    <nav class="bg-blue-800 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-truck-fast text-2xl"></i>
+                    <span class="text-xl font-bold">TIGER SOFT HS</span>
+                </div>
+                <!-- Mobile Menu Button -->
+        
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="focus:outline-none"><i class="fa-solid fa-bars text-2xl"></i></button>
+                </div>
+            </div>
+            <!-- Tabs -->
+            <div id="nav-tabs" class="hidden md:flex space-x-1 pb-2 overflow-x-auto">
+                <button onclick="switchTab('dashboard')" class="tab-btn px-4 py-2 rounded-t-lg bg-blue-700 font-semibold transition hover:bg-blue-600" data-target="dashboard">
+                    <i class="fa-solid fa-chart-line mr-2"></i> Dashboard
+                </button>
+                <button onclick="switchTab('vehicle')" class="tab-btn px-4 py-2 rounded-t-lg hover:bg-blue-600 transition" data-target="vehicle">
+                    <i class="fa-solid fa-car mr-2"></i> เช็คอุปกรณ์รถยนต์
+                </button>
+                <button onclick="switchTab('borrow')" class="tab-btn px-4 py-2 rounded-t-lg hover:bg-blue-600 transition" data-target="borrow">
+                    <i class="fa-solid fa-toolbox mr-2"></i> เบิก-คืนอุปกรณ์
+                </button>
+                <button onclick="switchTab('consumable')" class="tab-btn px-4 py-2 rounded-t-lg hover:bg-blue-600 transition" data-target="consumable">
+                    <i class="fa-solid fa-box-open mr-2"></i> อุปกรณ์สิ้นเปลือง
+                </button>
+                <button onclick="switchTab('asset')" class="tab-btn px-4 py-2 rounded-t-lg hover:bg-blue-600 transition" data-target="asset">
+                    <i class="fa-solid fa-file-invoice mr-2"></i> ทะเบียนทรัพย์สิน
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-6">
+
+        <!-- 1. Dashboard -->
+        <div id="dashboard" class="tab-content active space-y-6">
+            <h2 class="text-2xl font-bold border-b pb-2 mb-4"><i class="fa-solid fa-chart-pie mr-2 text-blue-600"></i> Global Overview 
+            </h2>
+            
+            <div class="bg-white p-4 rounded-lg shadow mb-6">
+                <h3 class="font-semibold text-lg mb-2">ทะเบียนรถยนต์ในระบบ:</h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="bg-gray-200 px-3 py-1 rounded-full text-sm">2ฒง4722</span>
+                    <span class="bg-gray-200 px-3 py-1 rounded-full text-sm">2ฒง4720</span>
+                    <span class="bg-gray-200 px-3 py-1 rounded-full text-sm">2ฒง4718</span>
+                    <span class="bg-gray-200 px-3 py-1 rounded-full text-sm">2ฒญ3840</span>
+                    <span class="bg-gray-200 px-3 py-1 rounded-full text-sm">2ฒญ3836</span>
+                    <span class="bg-gray-200 px-3 py-1 rounded-full text-sm">2ฒต6367</span>
+                    <span class="bg-gray-200 px-3 py-1 rounded-full text-sm">5ขห4690</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Chart 1 -->
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="text-center font-semibold mb-2">สรุปรายการเช็คอุปกรณ์รถยนต์ (เดือน/ปี)</h3>
+                    <canvas id="chartVehicle"></canvas>
+                </div>
+                <!-- Chart 2 -->
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="text-center font-semibold mb-2">สรุปรายการเบิก-คืนอุปกรณ์ (เดือน/ปี)</h3>
+                    <canvas id="chartBorrow"></canvas>
+                </div>
+                <!-- Chart 3 -->
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="text-center font-semibold mb-2">สรุปรายการเบิกอุปกรณ์สิ้นเปลือง (เดือน/ปี)</h3>
+                    <canvas id="chartConsumable"></canvas>
+                </div>
+                <!-- Chart 4 -->
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="text-center font-semibold mb-2">สรุปการบันทึกทะเบียนทรัพย์สิน (เดือน/ปี)</h3>
+                    <canvas id="chartAsset"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. เช็คอุปกรณ์รถยนต์ -->
+        <div id="vehicle" class="tab-content">
+            <h2 class="text-2xl font-bold border-b pb-2 mb-4"><i class="fa-solid fa-car mr-2 text-blue-600"></i> บันทึกรายการเช็คอุปกรณ์รถยนต์</h2>
+            
+            <div class="bg-white p-6 rounded-lg shadow mb-8">
+                <form id="formVehicle" onsubmit="submitData(event, 'vehicle')">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">วันที่ตรวจเช็ค</label>
+                            <input type="date" id="v_date" required class="w-full border rounded p-2 focus:ring focus:ring-blue-200">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">ชื่อผู้ตรวจเช็ค</label>
+                            <input type="text" id="v_inspector" required class="w-full border rounded p-2 focus:ring focus:ring-blue-200" placeholder="ระบุชื่อ-นามสกุล">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">ทะเบียนรถยนต์</label>
+                            <input type="text" id="v_car_reg" required list="car_list" class="w-full border rounded p-2 focus:ring focus:ring-blue-200" placeholder="เลือกหรือพิมพ์ทะเบียน">
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-1">ภาพถ่ายขณะตรวจเช็ค (เปิดกล้อง/อัปโหลด)</label>
+                        <input type="file" id="v_image" accept="image/*" capture="environment" class="w-full border rounded p-2" onchange="previewImage(this, 'v_img_preview')">
+                        <img id="v_img_preview" class="preview-img">
+                    </div>
+
+                    <h3 class="font-semibold text-lg bg-gray-100 p-2 rounded mb-4">รายการอุปกรณ์ (ตรวจสอบสถานะ)</h3>
+                    <div class="overflow-x-auto mb-6">
+                        <table class="w-full text-sm text-left border">
+                            <thead class="bg-gray-50 border-b">
+                                <tr>
+                                    <th class="p-2 w-1/2">รายการ</th>
+                                    <th class="p-2 text-center">ปกติ</th>
+                                    <th class="p-2 text-center">ชำรุด</th>
+                                    <th class="p-2 text-center">สูญหาย</th>
+                                    <th class="p-2">หมายเหตุ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vehicle_tools_list">
+                                <!-- Generated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded hover:bg-blue-700 transition">
+                        <i class="fa-solid fa-save mr-2"></i> บันทึกข้อมูล
+                    </button>
+                </form>
+            </div>
+
+            <!-- History Section -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg">ประวัติการบันทึก (ล่าสุด)</h3>
+                    <div class="space-x-2">
+                        <button onclick="exportExcel('vehicle')" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"><i class="fa-solid fa-file-excel mr-1"></i> Excel</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm border">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="p-2 border">วันที่</th>
+                                <th class="p-2 border">ผู้ตรวจ</th>
+                                <th class="p-2 border">ทะเบียนรถ</th>
+                                <th class="p-2 border">ภาพถ่าย</th>
+                                <th class="p-2 border">สถานะภาพรวม</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history_vehicle">
+                            <tr><td colspan="5" class="text-center p-4">กำลังโหลดข้อมูล...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. เบิก-คืนอุปกรณ์ -->
+        <div id="borrow" class="tab-content">
+            <h2 class="text-2xl font-bold border-b pb-2 mb-4"><i class="fa-solid fa-toolbox mr-2 text-blue-600"></i> บันทึกเบิกและคืนอุปกรณ์</h2>
+            
+            <div class="bg-white p-6 rounded-lg shadow mb-8">
+                <form id="formBorrow" onsubmit="submitData(event, 'borrow')">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">วันที่เบิก/คืน</label>
+                            <input type="date" id="b_date" required class="w-full border rounded p-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">ประเภท</label>
+                            <select id="b_type" required class="w-full border rounded p-2">
+                                <option value="เบิก">เบิกอุปกรณ์</option>
+                                <option value="คืน">คืนอุปกรณ์</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">ชื่อผู้เบิก/คืน</label>
+                            <input type="text" id="b_user" required class="w-full border rounded p-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">ชื่อผู้อนุมัติ</label>
+                            <input type="text" id="b_approver" required class="w-full border rounded p-2">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">ทะเบียนรถยนต์ที่นำไปใช้</label>
+                            <input type="text" id="b_car_reg" list="car_list" class="w-full border rounded p-2">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium mb-1">รายการอุปกรณ์ (ค้นหา/เลือก)</label>
+                            <input type="text" id="b_item" required list="borrow_items_list" class="w-full border rounded p-2" placeholder="เช่น หมวกนิรภัย, เครื่องเจียรไฟฟ้า">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">จำนวน</label>
+                            <input type="number" id="b_qty" min="1" required class="w-full border rounded p-2">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium mb-1">หมายเหตุ</label>
+                            <input type="text" id="b_remark" class="w-full border rounded p-2">
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-1">ภาพถ่ายหลักฐาน (เปิดกล้อง/อัปโหลด)</label>
+                        <input type="file" id="b_image" accept="image/*" capture="environment" class="w-full border rounded p-2" onchange="previewImage(this, 'b_img_preview')">
+                        <img id="b_img_preview" class="preview-img">
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded hover:bg-blue-700 transition">
+                        <i class="fa-solid fa-save mr-2"></i> บันทึกข้อมูล
+                    </button>
+                </form>
+            </div>
+
+            <!-- History Section -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg">ประวัติการเบิก-คืน</h3>
+                    <button onclick="exportExcel('borrow')" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"><i class="fa-solid fa-file-excel mr-1"></i> Excel</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm border">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="p-2 border">วันที่</th>
+                                <th class="p-2 border">ประเภท</th>
+                                <th class="p-2 border">ผู้ดำเนินการ</th>
+                                <th class="p-2 border">รายการ</th>
+                                <th class="p-2 border">จำนวน</th>
+                                <th class="p-2 border">ภาพถ่าย</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history_borrow"><tr><td colspan="6" class="text-center p-4">กำลังโหลดข้อมูล...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. เบิกอุปกรณ์สิ้นเปลือง -->
+        <div id="consumable" class="tab-content">
+            <h2 class="text-2xl font-bold border-b pb-2 mb-4"><i class="fa-solid fa-box-open mr-2 text-blue-600"></i> บันทึกเบิก/รับเข้า อุปกรณ์สิ้นเปลือง</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Form -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow">
+                    <form id="formConsumable" onsubmit="submitData(event, 'consumable')">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">วันที่ทำรายการ</label>
+                                <input type="date" id="c_date" required class="w-full border rounded p-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">ประเภทรายการ</label>
+                                <select id="c_action" required class="w-full border rounded p-2 bg-blue-50 font-semibold" onchange="toggleConsumableAction()">
+                                    <option value="เบิก">➖ เบิกวัสดุ</option>
+                                    <option value="รับเข้า">➕ เพิ่มสต๊อก (รับเข้า)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">ชื่อผู้ดำเนินการ</label>
+                                <input type="text" id="c_user" required class="w-full border rounded p-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">ผู้อนุมัติ</label>
+                                <input type="text" id="c_approver" required class="w-full border rounded p-2">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">รายการอุปกรณ์ (ค้นหาหรือพิมพ์ชื่อใหม่)</label>
+                                <input type="text" id="c_item" required list="c_item_list" class="w-full border rounded p-2" onchange="updateMaxQty()" onkeyup="updateMaxQty()" placeholder="เช่น เทปกาว, น็อต...">
+                                <datalist id="c_item_list">
+                                    <!-- Populated by JS -->
+                                </datalist>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">จำนวน</label>
+                                <input type="number" id="c_qty" min="1" required class="w-full border rounded p-2">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">ทะเบียนรถยนต์ (ถ้ามี)</label>
+                                <input type="text" id="c_car_reg" list="car_list" class="w-full border rounded p-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">หมายเหตุ</label>
+                                <input type="text" id="c_remark" class="w-full border rounded p-2">
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium mb-1">ภาพถ่ายหลักฐาน (ถ้ามี)</label>
+                            <input type="file" id="c_image" accept="image/*" capture="environment" class="w-full border rounded p-2" onchange="previewImage(this, 'c_img_preview')">
+                            <img id="c_img_preview" class="preview-img">
+                        </div>
+
+                        <button type="submit" id="btn_submit_consumable" class="w-full bg-blue-600 text-white font-bold py-3 rounded hover:bg-blue-700 transition">
+                            <i class="fa-solid fa-save mr-2"></i> บันทึกข้อมูลตัดสต๊อก
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Stock Dashboard -->
+                <div class="bg-white p-6 rounded-lg shadow max-h-[600px] overflow-y-auto">
+                    <h3 class="font-bold text-lg border-b pb-2 mb-4 sticky top-0 bg-white flex justify-between">
+                        <span>สถานะคงคลัง</span>
+                    </h3>
+                    <div id="stock_status_list" class="space-y-3">
+                        <!-- Generated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg">ประวัติการเบิกวัสดุสิ้นเปลือง</h3>
+                    <button onclick="exportExcel('consumable')" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"><i class="fa-solid fa-file-excel mr-1"></i> Excel</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm border">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="p-2 border">วันที่</th>
+                                <th class="p-2 border">ผู้เบิก</th>
+                                <th class="p-2 border">รายการ</th>
+                                <th class="p-2 border">จำนวน</th>
+                                <th class="p-2 border">ภาพถ่าย</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history_consumable"><tr><td colspan="5" class="text-center p-4">กำลังโหลดข้อมูล...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. ทะเบียนทรัพย์สิน -->
+        <div id="asset" class="tab-content">
+            <h2 class="text-2xl font-bold border-b pb-2 mb-4"><i class="fa-solid fa-file-invoice mr-2 text-blue-600"></i> บันทึกทะเบียนทรัพย์สิน</h2>
+            
+            <div class="bg-white p-6 rounded-lg shadow mb-8">
+                <form id="formAsset" onsubmit="submitData(event, 'asset')">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">รหัสทรัพย์สินบัญชี (Unique)</label>
+                            <input type="text" id="a_acc_code" required class="w-full border rounded p-2 bg-yellow-50">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">รหัสทรัพย์สิน HS (Unique)</label>
+                            <input type="text" id="a_hs_code" required class="w-full border rounded p-2 bg-yellow-50">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium mb-1">ชื่อรายการอุปกรณ์</label>
+                            <input type="text" id="a_name" required class="w-full border rounded p-2">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">ยี่ห้อ</label>
+                            <input type="text" id="a_brand" class="w-full border rounded p-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">รุ่น</label>
+                            <input type="text" id="a_model" class="w-full border rounded p-2">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium mb-1">Serial Number</label>
+                            <input type="text" id="a_sn" class="w-full border rounded p-2">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">วันที่ซื้อ</label>
+                            <input type="date" id="a_purchase_date" required class="w-full border rounded p-2" onchange="calcExpiry()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">อายุการใช้งาน (ปี)</label>
+                            <select id="a_lifespan" required class="w-full border rounded p-2" onchange="calcExpiry()">
+                                <option value="1">1 ปี</option>
+                                <option value="2">2 ปี</option>
+                                <option value="3">3 ปี</option>
+                                <option value="4">4 ปี</option>
+                                <option value="5">5 ปี</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">วันหมดอายุ (คำนวณอัตโนมัติ)</label>
+                            <input type="date" id="a_expiry_date" readonly class="w-full border rounded p-2 bg-gray-100 text-gray-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">สถานะ</label>
+                            <select id="a_status" required class="w-full border rounded p-2">
+                                <option value="ปกติ">ปกติ</option>
+                                <option value="ชำรุด">ชำรุด</option>
+                                <option value="สูญหาย">สูญหาย</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">แผนก</label>
+                            <select id="a_dept" required class="w-full border rounded p-2">
+                                <option value="HS">HS</option>
+                                <option value="TA">TA</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">ผู้ดูแลทรัพย์สิน</label>
+                            <input type="text" id="a_caretaker" required class="w-full border rounded p-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">สถานที่</label>
+                            <input type="text" id="a_location" class="w-full border rounded p-2">
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-1">หมายเหตุ</label>
+                        <input type="text" id="a_remark" class="w-full border rounded p-2">
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-1">ภาพถ่ายทรัพย์สิน</label>
+                        <input type="file" id="a_image" accept="image/*" capture="environment" class="w-full border rounded p-2" onchange="previewImage(this, 'a_img_preview')">
+                        <img id="a_img_preview" class="preview-img">
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded hover:bg-blue-700 transition">
+                        <i class="fa-solid fa-save mr-2"></i> บันทึกทะเบียนทรัพย์สิน
+                    </button>
+                </form>
+            </div>
+
+            <!-- History Section -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg">รายการทะเบียนทรัพย์สิน</h3>
+                    <button onclick="exportExcel('asset')" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"><i class="fa-solid fa-file-excel mr-1"></i> Excel</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm border">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="p-2 border">รหัสบัญชี/HS</th>
+                                <th class="p-2 border">ชื่อรายการ</th>
+                                <th class="p-2 border">ผู้ดูแล (แผนก)</th>
+                                <th class="p-2 border">สถานะ</th>
+                                <th class="p-2 border">ภาพถ่าย</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history_asset"><tr><td colspan="5" class="text-center p-4">กำลังโหลดข้อมูล...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Data Lists for Auto-complete -->
+    <datalist id="car_list">
+        <option value="2ฒง4722"></option><option value="2ฒง4720"></option><option value="2ฒง4718"></option>
+        <option value="2ฒญ3840"></option><option value="2ฒญ3836"></option><option value="2ฒต6367"></option><option value="5ขห4690"></option>
+    </datalist>
+
+    <datalist id="borrow_items_list">
+        <option value="หมวกนิรภัย"></option><option value="แว่นตานิรภัย"></option><option value="เสื้อสะท้อนแสง"></option>
+        <option value="ถุงมือ"></option><option value="เข็มขัดนิรภัย (เต็มตัว)"></option><option value="รองเท้านิรภัย"></option>
+        <option value="เทปกั้นเขต"></option><option value="เครื่องเจียรไฟฟ้า"></option><option value="เลื่อยจิ๊กซอว์ไฟฟ้า"></option>
+        <option value="เครื่องดูดฝุ่น"></option><option value="เครื่องลับคม"></option><option value="เครื่องทริมเมอร์"></option>
+        <option value="ชุดบล็อก"></option><option value="ประแจ"></option><option value="กรวยสะท้อนแสง"></option>
+        <option value="ลวดนำสายไฟ"></option><option value="ป้ายเตือน"></option><option value="ผ้าใบ"></option>
+    </datalist>
+
+    <!-- Modal for Image Viewing -->
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-80 hidden z-[100] flex justify-center items-center p-4" onclick="closeImageModal()">
+        <img id="modalImage" class="max-w-full max-h-full rounded-lg shadow-2xl" src="" alt="Full view">
+        <button class="absolute top-4 right-4 text-white text-3xl hover:text-gray-300"><i class="fa-solid fa-times"></i></button>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // Data Definitions
+        const vehicleToolsList = [
+            "คีมปากเฉียง(คีมตัด)","คีมปากผสม","คีมปากแหลม","กรรไกรตัดโลหะ","คัตเตอร์","เลื่อยตัดเหล็ก","เลื่อยตัดฝา","กรรไกรตัดราง","คีมย้ำหัวแลน","ไขควงปากแฉก","ไขควงวัดไฟ",
+            "หกเหลี่ยม(ครบชุด)","ระดับน้ำ","ดินสอ","ตลับเมตร","เครื่องทดสอบสัญญาณสายแลน","แคลมป์มิเตอร์","ค้อนหงอน/ค้อนช่างไฟฟ้า","ปลั๊กพ่วง","ปืนยิงซิลิโคน",
+            "เกรียงโป๊วสี","ผ้าใบ","ป้ายเตือน","บันไดทรงเอ 6ขั้น","ดอกไขควงแฉก","ดอกสว่านเจาะเหล็ก ขนาด 1/8\"","ดอกสว่านเจาะเหล็ก ขนาด 1/4\"","ดอกสว่านเจาะเหล็ก ขนาด 3/8\"",
+            "ดอกสว่านเจาะเหล็ก ขนาด 1/2\"","โฮลซอว์เจาะเหล็ก ขนาด 16mm","โฮลซอว์เจาะเหล็ก ขนาด 20mm","โฮลซอว์เจาะเหล็ก ขนาด 25mm","ตัวสว่านโรตารี่","ตัวสว่าน2ตัว",
+            "แบตเตอรี่ 2A(2อัน)","แบตเตอรี่ 4A(2อัน)","แท่นชาร์ตคู่ (1 อัน)","เครื่องเจียร์(ครบชุด)","โบลเวอร์(ครบชุด)","รถลาก4ชั้น","ดอกเจาะปูน เบอร์ 7"
+        ];
+
+        // Base Stock for Consumables
+        const initialConsumables = {
+            "บล็อคลอย(NANO 2x4)": 234, "พุกพลาสติกเบอร์7": 1500, "พุกผีเสื้อ": 700, "สกรูเกลียวปล่อย 7x2": 1000, "สกรูเกลียวปล่อย 7x1/2": 2000,
+            "สกรูดำ 6x1": 5000, "สกรูดำ 6x3/4": 5000, "เทปพันสายไฟ3M": 216, "สกรูปลายสว่าน 8x1/2": 7500, "สกรูปลายสว่าน 8x1": 5300,
+            "สกรูปลายสว่าน 8x3/4": 5000, "3Mกาว2หน้า": 24, "ไส้ไก่": 20, "เคเบิ้ลไทน์": 18
+        };
+        let currentStock = {...initialConsumables};
+
+        // URLs and Sheet IDs
+        const ENDPOINTS = {
+            vehicle: "https://script.google.com/macros/s/AKfycbx5_UBD3oPZCzlClClPPwrAHJs3Fz_Y2IZjV7wB-dNLdG87Db7Nc9PIfuMrMReZUToG/exec",
+            borrow: "https://script.google.com/macros/s/AKfycbzGFZUoy1a7fs99FkuKVsWKhjoA8vY2SrredSJQ3tR34IPl5wbrLY-HR7pTMh7bO1x1SQ/exec",
+            consumable: "https://script.google.com/macros/s/AKfycbz3BCJsrkuSG9s1SjF4Tih46YGhg1epGPAArk05q8E-0cs8Q-146W91YG24gjp-Dwlf5Q/exec",
+            asset: "https://script.google.com/macros/s/AKfycbxid8XF72t1FA9J8IbTQXMqTNTnmiQSIaXQC8wgm-B7ODKjEHgyuCAQGIkeBqnKgyr7Eg/exec"
+        };
+
+        const SHEET_IDS = {
+            vehicle: "1HlTco-9eZrlm7FFKL5XP5h1m8J4ueEmoSjxxH4wTyMU",
+            borrow: "198w6YtJojb_Hn1SvKQ3TrmMO37kMyQ0oNaFDmwTL140",
+            consumable: "1rch1niE29h7tiL8cXIFz0x2Qe6KuTgfv9oi4BomOK5g",
+            asset: "1m6Py_JIE7I9p2NaO56t1qu-H-mR_JtNW-JXg312jcyk"
+        };
+
+        // Global State for Charts & Exports
+        let appData = { vehicle: [], borrow: [], consumable: [], asset: [] };
+
+        // Initialization
+        window.onload = () => {
+            initDateFields();
+            buildVehicleChecklist();
+            buildConsumableSelect();
+            renderStock();
+            
+            // Mobile menu toggle
+            document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+                const tabs = document.getElementById('nav-tabs');
+                tabs.classList.toggle('hidden');
+                tabs.classList.toggle('flex');
+                tabs.classList.toggle('flex-col');
+            });
+
+            // Fetch Data from Google Sheets
+            fetchAllData();
+        };
+
+        function initDateFields() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('v_date').value = today;
+            document.getElementById('b_date').value = today;
+            document.getElementById('c_date').value = today;
+            document.getElementById('a_purchase_date').value = today;
+            calcExpiry();
+        }
+
+        // UI Interactions
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-blue-700', 'font-semibold');
+                if(el.dataset.target === tabId) el.classList.add('bg-blue-700', 'font-semibold');
+            });
+            document.getElementById(tabId).classList.add('active');
+            if(window.innerWidth < 768) document.getElementById('nav-tabs').classList.add('hidden'); // auto-close mobile menu
+        }
+
+        function buildVehicleChecklist() {
+            const tbody = document.getElementById('vehicle_tools_list');
+            let html = '';
+            vehicleToolsList.forEach((tool, index) => {
+                html += `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-2">${tool}</td>
+                    <td class="p-2 text-center"><input type="radio" name="tool_${index}" value="ปกติ" checked class="w-4 h-4 text-blue-600"></td>
+                    <td class="p-2 text-center"><input type="radio" name="tool_${index}" value="ชำรุด" class="w-4 h-4 text-red-600"></td>
+                    <td class="p-2 text-center"><input type="radio" name="tool_${index}" value="สูญหาย" class="w-4 h-4 text-yellow-600"></td>
+                    <td class="p-2"><input type="text" id="remark_${index}" class="w-full border rounded px-2 py-1 text-xs" placeholder="ระบุเหตุผล (ถ้ามี)"></td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function buildConsumableSelect() {
+            const list = document.getElementById('c_item_list');
+            if(!list) return;
+            list.innerHTML = '';
+            Object.keys(initialConsumables).forEach(item => {
+                list.innerHTML += `<option value="${item}"></option>`;
+            });
+        }
+
+        function toggleConsumableAction() {
+            const action = document.getElementById('c_action').value;
+            const btn = document.getElementById('btn_submit_consumable');
+            const carReg = document.getElementById('c_car_reg');
+            
+            if (action === 'รับเข้า') {
+                btn.innerHTML = '<i class="fa-solid fa-plus-circle mr-2"></i> บันทึกการเพิ่มสต๊อก';
+                btn.className = 'w-full bg-green-600 text-white font-bold py-3 rounded hover:bg-green-700 transition';
+                carReg.disabled = true;
+                carReg.value = '';
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-save mr-2"></i> บันทึกข้อมูลตัดสต๊อก';
+                btn.className = 'w-full bg-blue-600 text-white font-bold py-3 rounded hover:bg-blue-700 transition';
+                carReg.disabled = false;
+            }
+            updateMaxQty();
+        }
+
+        function updateMaxQty() {
+            const action = document.getElementById('c_action') ? document.getElementById('c_action').value : 'เบิก';
+            const item = document.getElementById('c_item').value;
+            const qtyInput = document.getElementById('c_qty');
+            
+            if (action === 'รับเข้า') {
+                qtyInput.removeAttribute('max');
+                qtyInput.placeholder = 'ระบุจำนวนที่รับเข้า';
+                return;
+            }
+
+            if(item && currentStock[item] !== undefined) {
+                qtyInput.max = currentStock[item];
+                qtyInput.placeholder = `สูงสุด: ${currentStock[item]}`;
+            } else {
+                qtyInput.removeAttribute('max');
+                qtyInput.placeholder = '';
+            }
+        }
+
+        function renderStock() {
+            const container = document.getElementById('stock_status_list');
+            let html = '';
+            
+            // เรียงลำดับตัวอักษรเพื่อให้หาของง่ายขึ้น
+            const sortedItems = Object.keys(currentStock).sort();
+
+            sortedItems.forEach(item => {
+                const initial = initialConsumables[item] || 0;
+                const current = currentStock[item];
+                
+                let baseForPercent = initial > 0 ? initial : Math.max(current, 1);
+                let percent = (current / baseForPercent) * 100;
+                
+                let colorClass = percent >= 50 ? 'bg-blue-100 border-blue-500 text-blue-800' : 'bg-red-100 border-red-500 text-red-800';
+                let barClass = percent >= 50 ? 'bg-blue-500' : 'bg-red-500';
+                
+                // ถ้ารับเข้าจนเกิน 100% ให้แสดงสีเขียว
+                if (percent > 100) {
+                    percent = 100;
+                    colorClass = 'bg-green-100 border-green-500 text-green-800';
+                    barClass = 'bg-green-500';
+                }
+
+                html += `
+                <div class="border-l-4 p-3 rounded shadow-sm ${colorClass}">
+                    <div class="flex justify-between font-semibold mb-1">
+                        <span>${item}</span>
+                        <span>${current} ${initial > 0 ? `/ ${initial}` : ''}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="${barClass} h-2 rounded-full transition-all duration-500" style="width: ${Math.max(0, percent)}%"></div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function calcExpiry() {
+            const pDate = document.getElementById('a_purchase_date').value;
+            const years = parseInt(document.getElementById('a_lifespan').value);
+            if(pDate && !isNaN(years)) {
+                let date = new Date(pDate);
+                date.setFullYear(date.getFullYear() + years);
+                document.getElementById('a_expiry_date').value = date.toISOString().split('T')[0];
+            }
+        }
+
+        // Image Handling
+        function previewImage(input, imgId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById(imgId).src = e.target.result;
+                    document.getElementById(imgId).style.display = 'block';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function getBase64Image(imgElementId) {
+            const img = document.getElementById(imgElementId);
+            if (!img.src || img.src === window.location.href) return "";
+            
+            // Compress image via Canvas before sending
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            
+            // max width/height
+            const MAX_SIZE = 800;
+            let width = img.naturalWidth;
+            let height = img.naturalHeight;
+
+            if (width > height && width > MAX_SIZE) {
+                height *= MAX_SIZE / width;
+                width = MAX_SIZE;
+            } else if (height > MAX_SIZE) {
+                width *= MAX_SIZE / height;
+                height = MAX_SIZE;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Return base64 string (jpeg format, 0.6 quality)
+            return canvas.toDataURL("image/jpeg", 0.6);
+        }
+
+        function openImageModal(src) {
+            document.getElementById('modalImage').src = src;
+            document.getElementById('imageModal').classList.remove('hidden');
+        }
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.add('hidden');
+        }
+
+        // Fetching Data (Read from Google Visualization API)
+        async function fetchAllData() {
+            try {
+                await Promise.all([
+                    fetchSheet('vehicle', SHEET_IDS.vehicle),
+                    fetchSheet('borrow', SHEET_IDS.borrow),
+                    fetchSheet('consumable', SHEET_IDS.consumable),
+                    fetchSheet('asset', SHEET_IDS.asset)
+                ]);
+                updateCharts();
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        }
+
+        async function fetchSheet(type, sheetId) {
+            // Using Google Viz API to read public sheet data as JSON
+            const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+            try {
+                const response = await fetch(url);
+                let text = await response.text();
+                // Remove the execution wrapper
+                const jsonStr = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\)/)[1];
+                const data = JSON.parse(jsonStr);
+                
+                appData[type] = data.table.rows.map(row => row.c.map(cell => cell ? cell.v : ''));
+                renderHistoryTable(type, appData[type]);
+                
+                if(type === 'consumable') {
+                    recalculateStock(appData['consumable']);
+                }
+            } catch(e) {
+                console.error(`Error loading ${type}:`, e);
+                document.getElementById(`history_${type}`).innerHTML = `<tr><td colspan="6" class="text-center p-4 text-red-500">ไม่สามารถโหลดข้อมูลประวัติได้ (ตรวจสอบการแชร์ไฟล์ Sheet)</td></tr>`;
+            }
+        }
+
+        function recalculateStock(records) {
+            // Reset to initial
+            currentStock = {...initialConsumables};
+            let allItems = new Set(Object.keys(initialConsumables));
+
+            // Iterate history to subtract or add based on remark tag
+            records.forEach(row => {
+                if(row.length >= 5) {
+                    const item = row[3]; // รายการอุปกรณ์
+                    const qty = parseInt(row[4]); // จำนวน
+                    const remark = row[6] || ''; // หมายเหตุ
+                    
+                    if(item && !isNaN(qty)) {
+                        allItems.add(item);
+                        // ถ้าเป็นรายการใหม่ที่ไม่มีใน initialConsumables ให้เซ็ตค่าเริ่มต้นเป็น 0 ก่อน
+                        if(currentStock[item] === undefined) {
+                            currentStock[item] = 0;
+                        }
+
+                        // ตรวจสอบว่าเป็นการรับเข้าหรือไม่
+                        if(String(remark).includes('[รับเข้า]')) {
+                            currentStock[item] += qty;
+                        } else {
+                            currentStock[item] -= qty;
+                        }
+                    }
+                }
+            });
+
+            // อัปเดตรายการในช่องค้นหาให้มีรายการใหม่ๆ ที่เพิ่มเข้ามาด้วย
+            const list = document.getElementById('c_item_list');
+            if(list) {
+                list.innerHTML = '';
+                allItems.forEach(item => {
+                    list.innerHTML += `<option value="${item}"></option>`;
+                });
+            }
+
+            renderStock();
+        }
+
+        function renderHistoryTable(type, data) {
+            const tbody = document.getElementById(`history_${type}`);
+            if(!data || data.length === 0 || (data.length === 1 && !data[0][0])) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center p-4">ไม่มีข้อมูล</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            // Skip header row if exists, process backwards for latest first
+            const rows = [...data].reverse(); 
+            
+            rows.forEach((row, i) => {
+                // Skip if row is empty or header
+                if(!row[0] || i === rows.length-1) return; 
+                
+                let tr = '<tr class="border-b hover:bg-gray-50">';
+                if(type === 'vehicle') {
+                    // Date, Inspector, Car, Image, Status
+                    let dateStr = row[0] instanceof Date ? row[0].toLocaleDateString('th-TH') : formatDateStr(row[0]);
+                    tr += `<td class="p-2">${dateStr}</td><td class="p-2">${row[1]}</td><td class="p-2">${row[2]}</td>`;
+                    tr += `<td class="p-2">${row[3] ? `<img src="${row[3]}" class="table-img" onclick="openImageModal('${row[3]}')">` : '-'}</td>`;
+                    tr += `<td class="p-2"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">บันทึกแล้ว</span></td>`;
+                }
+                else if(type === 'borrow') {
+                    let dateStr = formatDateStr(row[0]);
+                    tr += `<td class="p-2">${dateStr}</td><td class="p-2">${row[1]}</td><td class="p-2">${row[2]}</td><td class="p-2">${row[4]}</td><td class="p-2 text-center">${row[5]}</td>`;
+                    tr += `<td class="p-2">${row[8] ? `<img src="${row[8]}" class="table-img" onclick="openImageModal('${row[8]}')">` : '-'}</td>`;
+                }
+                else if(type === 'consumable') {
+                    let dateStr = formatDateStr(row[0]);
+                    let isAdd = String(row[6]).includes('[รับเข้า]');
+                    let actionBadge = isAdd ? '<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs"><i class="fa-solid fa-plus"></i> รับเข้า</span>' : '<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs"><i class="fa-solid fa-minus"></i> เบิก</span>';
+                    
+                    tr += `<td class="p-2">${dateStr}</td><td class="p-2">${row[1]}<br>${actionBadge}</td><td class="p-2">${row[3]}</td><td class="p-2 text-center font-bold ${isAdd ? 'text-green-600' : 'text-red-600'}">${isAdd ? '+' : '-'}${row[4]}</td>`;
+                    tr += `<td class="p-2">${row[7] ? `<img src="${row[7]}" class="table-img" onclick="openImageModal('${row[7]}')">` : '-'}</td>`;
+                }
+                else if(type === 'asset') {
+                    tr += `<td class="p-2">${row[0]}<br><span class="text-xs text-gray-500">${row[1]}</span></td><td class="p-2">${row[2]}</td><td class="p-2">${row[12]} (${row[11]})</td>`;
+                    let statusColor = row[10] === 'ปกติ' ? 'bg-green-100 text-green-800' : (row[10] === 'ชำรุด' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800');
+                    tr += `<td class="p-2"><span class="${statusColor} px-2 py-1 rounded text-xs">${row[10]}</span></td>`;
+                    tr += `<td class="p-2">${row[3] ? `<img src="${row[3]}" class="table-img" onclick="openImageModal('${row[3]}')">` : '-'}</td>`;
+                }
+                tr += '</tr>';
+                html += tr;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function formatDateStr(str) {
+            if(!str) return '-';
+            if(typeof str === 'string' && str.includes('Date(')) {
+                // Parse google sheet date format "Date(2023, 10, 5)"
+                const match = str.match(/Date\((\d+),\s*(\d+),\s*(\d+)\)/);
+                if(match) return `${match[3]}/${parseInt(match[2])+1}/${match[1]}`;
+            }
+            return String(str).substring(0, 10);
+        }
+
+        // Submitting Data
+        async function submitData(e, type) {
+            e.preventDefault();
+            
+            // Preparing payload
+            let payload = {};
+            
+            if (type === 'vehicle') {
+                let checklist = [];
+                vehicleToolsList.forEach((tool, i) => {
+                    let status = document.querySelector(`input[name="tool_${i}"]:checked`).value;
+                    let remark = document.getElementById(`remark_${i}`).value;
+                    checklist.push(`${tool}:${status}:${remark}`);
+                });
+
+                payload = {
+                    date: document.getElementById('v_date').value,
+                    inspector: document.getElementById('v_inspector').value,
+                    carReg: document.getElementById('v_car_reg').value,
+                    image: getBase64Image('v_img_preview'),
+                    checklist: JSON.stringify(checklist)
+                };
+            }
+            else if (type === 'borrow') {
+                payload = {
+                    date: document.getElementById('b_date').value,
+                    action: document.getElementById('b_type').value,
+                    user: document.getElementById('b_user').value,
+                    approver: document.getElementById('b_approver').value,
+                    item: document.getElementById('b_item').value,
+                    qty: document.getElementById('b_qty').value,
+                    carReg: document.getElementById('b_car_reg').value,
+                    remark: document.getElementById('b_remark').value,
+                    image: getBase64Image('b_img_preview')
+                };
+            }
+            else if (type === 'consumable') {
+                const action = document.getElementById('c_action').value;
+                const remark = document.getElementById('c_remark').value;
+                const finalRemark = action === 'รับเข้า' ? `[รับเข้า] ${remark}` : remark;
+
+                payload = {
+                    date: document.getElementById('c_date').value,
+                    user: document.getElementById('c_user').value,
+                    approver: document.getElementById('c_approver').value,
+                    item: document.getElementById('c_item').value,
+                    qty: document.getElementById('c_qty').value,
+                    carReg: document.getElementById('c_car_reg').value,
+                    remark: finalRemark,
+                    image: getBase64Image('c_img_preview')
+                };
+                
+                // ตรวจสอบสต๊อกเฉพาะกรณีที่เป็นการ "เบิก"
+                if(action === 'เบิก' && (currentStock[payload.item] === undefined || parseInt(payload.qty) > currentStock[payload.item])) {
+                    Swal.fire('ข้อผิดพลาด', 'จำนวนที่เบิกเกินกว่าสต๊อกที่มีอยู่ หรือไม่พบรายการนี้', 'error');
+                    return;
+                }
+            }
+            else if (type === 'asset') {
+                payload = {
+                    accCode: document.getElementById('a_acc_code').value,
+                    hsCode: document.getElementById('a_hs_code').value,
+                    name: document.getElementById('a_name').value,
+                    image: getBase64Image('a_img_preview'),
+                    brand: document.getElementById('a_brand').value,
+                    model: document.getElementById('a_model').value,
+                    sn: document.getElementById('a_sn').value,
+                    purchaseDate: document.getElementById('a_purchase_date').value,
+                    lifespan: document.getElementById('a_lifespan').value,
+                    expiryDate: document.getElementById('a_expiry_date').value,
+                    status: document.getElementById('a_status').value,
+                    dept: document.getElementById('a_dept').value,
+                    caretaker: document.getElementById('a_caretaker').value,
+                    location: document.getElementById('a_location').value,
+                    remark: document.getElementById('a_remark').value
+                };
+            }
+
+            // Show Loading
+            Swal.fire({
+                title: 'กำลังบันทึกข้อมูล...',
+                text: 'โปรดรอสักครู่ ระบบกำลังส่งข้อมูลไปยัง Google Sheet',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            // Using fetch POST (text/plain to bypass CORS preflight)
+            try {
+                const response = await fetch(ENDPOINTS[type], {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    Swal.fire('สำเร็จ!', 'บันทึกข้อมูลเรียบร้อยแล้ว', 'success').then(() => {
+                        // Optimistic Update: นำข้อมูลที่เพิ่งบันทึกไปแสดงในตารางทันที (แก้ปัญหา Google Sheet อัปเดตช้า)
+                        let newRow = [];
+                        if(type === 'vehicle') {
+                            newRow = [payload.date, payload.inspector, payload.carReg, payload.image, payload.checklist];
+                        } else if(type === 'borrow') {
+                            newRow = [payload.date, payload.action, payload.user, payload.approver, payload.item, payload.qty, payload.carReg, payload.remark, payload.image];
+                        } else if(type === 'consumable') {
+                            newRow = [payload.date, payload.user, payload.approver, payload.item, payload.qty, payload.carReg, payload.remark, payload.image];
+                        } else if(type === 'asset') {
+                            newRow = [payload.accCode, payload.hsCode, payload.name, payload.image, payload.brand, payload.model, payload.sn, payload.purchaseDate, payload.lifespan, payload.expiryDate, payload.status, payload.dept, payload.caretaker, payload.location, payload.remark];
+                        }
+                        
+                        appData[type].push(newRow);
+                        renderHistoryTable(type, appData[type]);
+                        if(type === 'consumable') recalculateStock(appData['consumable']);
+                        updateCharts();
+
+                        // Reset form
+                        document.getElementById(`form${type.charAt(0).toUpperCase() + type.slice(1)}`).reset();
+                        document.getElementById(`${type.charAt(0)}_img_preview`).style.display = 'none';
+                        document.getElementById(`${type.charAt(0)}_img_preview`).src = '';
+                        initDateFields();
+                    });
+                } else {
+                    throw new Error(result.message || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Error submitting data:', error);
+                // Fallback for CORS mode if strictly required (though standard fetch as text/plain usually works with GS)
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกได้ โปรดตรวจสอบสิทธิ์การตั้งค่า Web App ใน Google Script: ' + error.message, 'error');
+            }
+        }
+
+        // Charts Dashboard
+        function updateCharts() {
+            // Helper to parse date from various formats
+            const parseDateStr = (dStr) => {
+                if(!dStr) return null;
+                if(dStr instanceof Date) return dStr;
+                if(typeof dStr === 'string' && dStr.includes('Date(')) {
+                    const m = dStr.match(/Date\((\d+),\s*(\d+),\s*(\d+)\)/);
+                    if(m) return new Date(m[1], m[2], m[3]);
+                }
+                const d = new Date(dStr);
+                return isNaN(d.getTime()) ? null : d;
+            };
+
+            // Helper to group by Month-Year (e.g., "10/2023")
+            const groupData = (dataArray, dateColIndex) => {
+                let counts = {};
+                if(!dataArray || dataArray.length === 0) return counts;
+                dataArray.forEach((row, i) => {
+                    if(i===0 && typeof row[0] === 'string' && row[0].includes('วันที่')) return; // skip header
+                    let dateObj = parseDateStr(row[dateColIndex]);
+                    
+                    if(dateObj) {
+                        let key = `${dateObj.getMonth() + 1}/${dateObj.getFullYear()}`;
+                        counts[key] = (counts[key] || 0) + 1;
+                    }
+                });
+                return counts;
+            };
+
+            // Custom group for Vehicle to count status (ปกติ, ชำรุด, สูญหาย)
+            const groupVehicleData = (dataArray) => {
+                let tempMap = {};
+                if(!dataArray || dataArray.length === 0) return tempMap;
+
+                dataArray.forEach((row, i) => {
+                    if(i===0 && typeof row[0] === 'string' && row[0].includes('วันที่')) return; // skip header
+                    let dateObj = parseDateStr(row[0]);
+                    
+                    if(dateObj) {
+                        let key = `${dateObj.getMonth() + 1}/${dateObj.getFullYear()}`;
+                        if(!tempMap[key]) tempMap[key] = { checks: 0, normal: 0, damaged: 0, lost: 0 };
+                        
+                        tempMap[key].checks += 1;
+
+                        // Parse checklist to count Normal/Damaged/Lost (Column 4)
+                        let checklistStr = row[4];
+                        if (checklistStr) {
+                            try {
+                                let checklist = JSON.parse(checklistStr);
+                                if(Array.isArray(checklist)) {
+                                    checklist.forEach(itemStr => {
+                                        let parts = itemStr.split(':');
+                                        if (parts.length >= 2) {
+                                            if (parts[1] === 'ปกติ') tempMap[key].normal += 1;
+                                            if (parts[1] === 'ชำรุด') tempMap[key].damaged += 1;
+                                            if (parts[1] === 'สูญหาย') tempMap[key].lost += 1;
+                                        }
+                                    });
+                                }
+                            } catch(e) {}
+                        }
+                    }
+                });
+                return tempMap;
+            };
+
+            // Custom group for Borrow to count status (เบิก, คืน)
+            const groupBorrowData = (dataArray) => {
+                let tempMap = {};
+                if(!dataArray || dataArray.length === 0) return tempMap;
+
+                dataArray.forEach((row, i) => {
+                    if(i===0 && typeof row[0] === 'string' && row[0].includes('วันที่')) return; // skip header
+                    let dateObj = parseDateStr(row[0]);
+                    
+                    if(dateObj) {
+                        let key = `${dateObj.getMonth() + 1}/${dateObj.getFullYear()}`;
+                        if(!tempMap[key]) tempMap[key] = { borrow: 0, return: 0 };
+                        
+                        let action = row[1]; // Column ประเภท (เบิก/คืน)
+                        if(action === 'เบิก') tempMap[key].borrow += 1;
+                        if(action === 'คืน') tempMap[key].return += 1;
+                    }
+                });
+                return tempMap;
+            };
+
+            // Custom group for Consumables to sum quantities by item
+            const groupConsumableData = (dataArray) => {
+                let tempMap = {};
+                const targetItems = Object.keys(initialConsumables);
+
+                if(!dataArray || dataArray.length === 0) return { tempMap, targetItems };
+
+                dataArray.forEach((row, i) => {
+                    if(i===0 && typeof row[0] === 'string' && row[0].includes('วันที่')) return; // skip header
+                    let dateObj = parseDateStr(row[0]);
+                    
+                    if(dateObj) {
+                        let key = `${dateObj.getMonth() + 1}/${dateObj.getFullYear()}`;
+                        if(!tempMap[key]) {
+                            tempMap[key] = {};
+                            targetItems.forEach(item => tempMap[key][item] = 0);
+                        }
+                        
+                        let item = row[3]; // Column รายการอุปกรณ์
+                        let qty = parseInt(row[4]) || 0; // Column จำนวน
+                        let remark = row[6] || '';
+                        
+                        // นับเฉพาะยอด "เบิก" เท่านั้น (ไม่นับยอดที่รับเข้า)
+                        let isAdd = String(remark).includes('[รับเข้า]');
+                        if(!isAdd && targetItems.includes(item)) {
+                            tempMap[key][item] += qty;
+                        }
+                    }
+                });
+                return { tempMap, targetItems };
+            };
+
+            // Custom group for Asset to count status (ปกติ, ชำรุด, สูญหาย)
+            const groupAssetData = (dataArray) => {
+                let tempMap = {};
+                if(!dataArray || dataArray.length === 0) return tempMap;
+
+                dataArray.forEach((row, i) => {
+                    if(i===0 && typeof row[0] === 'string' && row[0].includes('รหัสบัญชี')) return; // skip header
+                    let dateObj = parseDateStr(row[7]); // Column วันที่ซื้อ
+                    
+                    if(dateObj) {
+                        let key = `${dateObj.getMonth() + 1}/${dateObj.getFullYear()}`;
+                        if(!tempMap[key]) tempMap[key] = { normal: 0, damaged: 0, lost: 0 };
+                        
+                        let status = row[10]; // Column สถานะ (ปกติ/ชำรุด/สูญหาย)
+                        if(status === 'ปกติ') tempMap[key].normal += 1;
+                        if(status === 'ชำรุด') tempMap[key].damaged += 1;
+                        if(status === 'สูญหาย') tempMap[key].lost += 1;
+                    }
+                });
+                return tempMap;
+            };
+
+            // Render single dataset charts
+            const renderChart = (canvasId, label, dataObj, color) => {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                const existingChart = Chart.getChart(canvasId);
+                if (existingChart) existingChart.destroy();
+
+                const labels = Object.keys(dataObj);
+                const values = Object.values(dataObj);
+                
+                if(labels.length === 0) { labels.push('No Data'); values.push(0); }
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{ label: label, data: values, backgroundColor: color }]
+                    },
+                    options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                });
+            };
+
+            // --- Render Vehicle Chart (Multi-dataset) ---
+            const vData = groupVehicleData(appData.vehicle);
+            const vLabels = Object.keys(vData);
+            if(vLabels.length === 0) {
+                vLabels.push('No Data');
+                vData['No Data'] = { checks: 0, normal: 0, damaged: 0, lost: 0 };
+            }
+            
+            const ctxV = document.getElementById('chartVehicle').getContext('2d');
+            const existingChartV = Chart.getChart('chartVehicle');
+            if (existingChartV) existingChartV.destroy();
+
+            new Chart(ctxV, {
+                type: 'bar',
+                data: {
+                    labels: vLabels,
+                    datasets: [
+                        { label: 'จำนวนครั้งที่ตรวจ', data: vLabels.map(l => vData[l].checks), backgroundColor: '#3b82f6' },
+                        { label: 'ปกติ (ชิ้น)', data: vLabels.map(l => vData[l].normal), backgroundColor: '#10b981' },
+                        { label: 'ชำรุด (ชิ้น)', data: vLabels.map(l => vData[l].damaged), backgroundColor: '#ef4444' },
+                        { label: 'สูญหาย (ชิ้น)', data: vLabels.map(l => vData[l].lost), backgroundColor: '#f59e0b' }
+                    ]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            });
+
+            // --- Render Borrow Chart (Multi-dataset) ---
+            const bData = groupBorrowData(appData.borrow);
+            const bLabels = Object.keys(bData);
+            if(bLabels.length === 0) {
+                bLabels.push('No Data');
+                bData['No Data'] = { borrow: 0, return: 0 };
+            }
+            
+            const ctxB = document.getElementById('chartBorrow').getContext('2d');
+            const existingChartB = Chart.getChart('chartBorrow');
+            if (existingChartB) existingChartB.destroy();
+
+            new Chart(ctxB, {
+                type: 'bar',
+                data: {
+                    labels: bLabels,
+                    datasets: [
+                        { label: 'เบิก (ครั้ง)', data: bLabels.map(l => bData[l].borrow), backgroundColor: '#f59e0b' },
+                        { label: 'คืน (ครั้ง)', data: bLabels.map(l => bData[l].return), backgroundColor: '#10b981' }
+                    ]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            });
+
+            // --- Render Consumable Chart (Multi-dataset) ---
+            const cDataObj = groupConsumableData(appData.consumable);
+            const cData = cDataObj.tempMap;
+            const cTargetItems = cDataObj.targetItems;
+            const cLabels = Object.keys(cData);
+            
+            if(cLabels.length === 0) {
+                cLabels.push('No Data');
+                cData['No Data'] = {};
+                cTargetItems.forEach(item => cData['No Data'][item] = 0);
+            }
+
+            const ctxC = document.getElementById('chartConsumable').getContext('2d');
+            const existingChartC = Chart.getChart('chartConsumable');
+            if (existingChartC) existingChartC.destroy();
+
+            // กำหนดสีให้แตกต่างกันสำหรับวัสดุสิ้นเปลืองแต่ละประเภท
+            const consumableColors = [
+                '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', 
+                '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9',
+                '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef'
+            ];
+
+            new Chart(ctxC, {
+                type: 'bar',
+                data: {
+                    labels: cLabels,
+                    datasets: cTargetItems.map((item, index) => ({
+                        label: item,
+                        data: cLabels.map(l => cData[l][item]),
+                        backgroundColor: consumableColors[index % consumableColors.length]
+                    }))
+                },
+                options: { 
+                    responsive: true, 
+                    scales: { 
+                        x: { stacked: false },
+                        y: { beginAtZero: true, stacked: false } 
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
+                    }
+                }
+            });
+
+            // --- Render Asset Chart (Multi-dataset) ---
+            const aData = groupAssetData(appData.asset);
+            const aLabels = Object.keys(aData);
+            
+            if(aLabels.length === 0) {
+                aLabels.push('No Data');
+                aData['No Data'] = { normal: 0, damaged: 0, lost: 0 };
+            }
+
+            const ctxA = document.getElementById('chartAsset').getContext('2d');
+            const existingChartA = Chart.getChart('chartAsset');
+            if (existingChartA) existingChartA.destroy();
+
+            new Chart(ctxA, {
+                type: 'bar',
+                data: {
+                    labels: aLabels,
+                    datasets: [
+                        { label: 'ปกติ', data: aLabels.map(l => aData[l].normal), backgroundColor: '#10b981' },
+                        { label: 'ชำรุด', data: aLabels.map(l => aData[l].damaged), backgroundColor: '#ef4444' },
+                        { label: 'สูญหาย', data: aLabels.map(l => aData[l].lost), backgroundColor: '#f59e0b' }
+                    ]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            });
+        }
+
+        // Export Functions
+        function exportExcel(type) {
+            if(!appData[type] || appData[type].length <= 1) {
+                Swal.fire('แจ้งเตือน', 'ไม่มีข้อมูลสำหรับดาวน์โหลด', 'warning');
+                return;
+            }
+            
+            const ws = XLSX.utils.aoa_to_sheet(appData[type]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Data");
+            XLSX.writeFile(wb, `Export_${type}_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+    </script>
+</body>
+</html>
